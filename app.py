@@ -127,6 +127,7 @@ def init(model_selection, progress=gr.Progress()):
                     controlnet=model,
                     vae=vae,
                     use_safetensors=True,
+                    variant="fp16",
                 ).to(DEVICE)
                 
                 progress(0.9, desc="Setting up scheduler")
