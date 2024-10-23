@@ -127,7 +127,7 @@ def init(model_selection, progress=gr.Progress()):
                     controlnet=model,
                     vae=vae,
                     use_safetensors=True,
-                    variant="fp16",
+                    #variant="fp16",  deprecated. and now terminates if model isn't explicitly listed as fp16
                 ).to(DEVICE)
                 
                 progress(0.9, desc="Setting up scheduler")
