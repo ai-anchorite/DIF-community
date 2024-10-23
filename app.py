@@ -40,17 +40,9 @@ MODELS = {
         "description": "Realism model.",
         "web_link": "https://civitai.com/models/152525/realism-engine-sdxl"
     },
-        "Big Lust v1.5": {
-        "path": "John6666/big-lust-v15-sdxl",
-        "default_steps": 40,
-        "max_steps": 50,
-        "default_guidance": 6,
-        "max_guidance": 10.0,
-        "description": "For experimental purposes. requires high steps.",
-        "web_link": "https://civitai.com/models/575395/big-lust?modelVersionId=929239"
-    },
 
     # Add other models here following the exact format as above. Only diffusers models, ie from huggingface not civitai.
+    # i tried a bunch, but realvisXL V5.0 Lightning seems to work best. good enough until flux and SD3.5 get settled :)
 }
 
 # You can change this to any model in your MODELS dictionary
