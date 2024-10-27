@@ -476,18 +476,9 @@ def update_resize_controls(target_ratio, width, height, resize_percentage):
     )
 
     
-title = """
-<style>
-.title-container{text-align:center;margin:auto;padding:8px 12px;background:linear-gradient(to bottom,#162828,#101c1c);color:#fff;border-radius:8px;font-family:Arial,sans-serif;border:2px solid #0a1212;box-shadow:0 2px 4px rgba(0,0,0,0.1);position:relative}.title-container h1{font-size:2em;margin:0 0 5px;font-weight:300;color:#ff6b35}.title-container p{color:#b0c4c4;font-size:0.9em;margin:0 0 5px}.title-container a{color:#ff6b35;text-decoration:none;transition:color 0.3s ease}.title-container a:hover{color:#ff8c5a}.links-left,.links-right{position:absolute;bottom:5px;font-size:0.8em;color:#a0a0a0}.links-left{left:10px}.links-right{right:10px}.emoji-icon{vertical-align:middle;margin-right:3px;font-size:1em}
-</style>
-<div class="title-container">
-<h1>Diffusers Image Outpaint</h1>
-<p>Extend your images using AI</p>
-<div class="links-left"><span class="emoji-icon">⚡</span>Powered by <a href="https://pinokio.computer/" target="_blank">Pinokio</a></div>
-<div class="links-right">Code and inspiration borrowed from <a href="https://huggingface.co/OzzyGT" target="_blank">OzzyGT</a> & <a href="https://huggingface.co/spaces/fffiloni/diffusers-image-outpaint" target="_blank">fffiloni</a></div>
-</div>
-"""
-
+title = """<style>.banner-outpaint{background:linear-gradient(to bottom,#162828,#101c1c);color:#fff;padding:0.75rem;border-radius:0.5rem;border:1px solid rgba(255,255,255,0.1);box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-bottom:0.75rem;text-align:center}.banner-outpaint h1{font-size:1.75rem;margin:0 0 0.25rem 0;font-weight:300;color:#ff6b35 !important}.banner-outpaint p{color:#b0c4c4;font-size:1rem;margin:0 0 0.75rem 0}.banner-outpaint .footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;font-size:0.875rem;color:#a0a0a0}.banner-outpaint .powered-by{display:flex;align-items:center;gap:0.25rem}.banner-outpaint .credits{display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem}.banner-outpaint a{color:#4a9eff;text-decoration:none;transition:color 0.2s ease}.banner-outpaint a:hover{color:#6db3ff}@media (max-width:768px){.banner-outpaint .footer{flex-direction:column;gap:0.5rem;align-items:center}.banner-outpaint .credits{align-items:center}}</style><div class="banner-outpaint"><h1>Diffusers Image Outpaint</h1><p>Extend your images using AI</p><div class="footer"><div class="powered-by"><span>⚡ Powered by</span><a href="https://pinokio.computer/" target="_blank">Pinokio</a></div><div class="credits"><div>Code and inspiration borrowed from</div><div><a href="https://huggingface.co/OzzyGT" target="_blank">OzzyGT</a> & <a href="https://huggingface.co/spaces/fffiloni/diffusers-image-outpaint" target="_blank">fffiloni</a></div></div></div></div>"""
+    
+    
 with gr.Blocks() as demo:
     gr.HTML(title)
     with gr.Row():
