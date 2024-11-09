@@ -61,7 +61,7 @@ VAE_SCALE_FACTOR = 8
 global pipe
 global current_model
 
-# blame Claude!
+
 pipe = None
 current_model = None
 global_image = None
@@ -150,13 +150,19 @@ def fill_image(prompt, image, model_selection, guidance_scale, steps, paste_back
         if pipe is None or current_model != model_selection:
             init_message = init(model_selection)
             yield (None, None), gr.update(), f"{init_message} Preparing for image generation..."
-        
+            
+        # ensure mask matches global_image dimensions before processing
+        if image['layers'][0].size != global_image.size:
+            print(f"Resizing mask to match global image dimensions...")
+            image['layers'][0] = image['layers'][0].resize(global_image.size, Image.LANCZOS)
+            print(f"New mask dimensions: {image['layers'][0].size}")
+            
         source = global_image 
         mask = image["layers"][0]
 
         source = resize_image(source, min_size=MIN_IMAGE_SIZE, scale_factor=VAE_SCALE_FACTOR)
         mask = mask.resize(source.size, Image.LANCZOS)
-        
+
         alpha_channel = mask.split()[3]
         binary_mask = alpha_channel.point(lambda p: p > 0 and 255)
         cnet_image = source.copy()
@@ -377,7 +383,7 @@ def calculate_resize_options(image):
     
     return sorted(valid_options, reverse=True)
 
-# updates the sizer and console with the available options for the newly loaded image
+
 def update_resize_controls(image):
     global global_image, global_original_image
     if image is None or (isinstance(image, dict) and image.get("background") is None):
@@ -391,30 +397,37 @@ def update_resize_controls(image):
         image = image["background"]
     
     global_original_image = image.copy()
-    global_image = global_original_image.copy()
+    orig_width, orig_height = global_original_image.size
+    global_image = resize_image(global_original_image.copy())
+    width, height = global_image.size
     
-    width, height = global_original_image.size
     mp = (width * height) / 1000000
     estimated_vram = 10.0 + (mp * 4) + 1.0
-    
     resize_options = calculate_resize_options(global_original_image)
     
-    # Always include 100% in the choices
     if 100 not in resize_options:
         resize_options = [100] + resize_options
-    
-    info_text = f"""
-<p>Current size: <span style="color: #FF8C00; font-weight: bold;">{width}x{height}</span></p>
+
+    # Common return values
+    controls_update = (
+        gr.update(value=100, choices=resize_options, interactive=True),
+        gr.update(interactive=bool(resize_options))
+    )
+        
+    if (orig_width, orig_height) != (width, height):
+        return *controls_update, f"""<p style="color: #FF8C00;">⚠️ The original Image dimensions ({orig_width}x{orig_height}) require adjustment for vae model compatibility. 
+            Please click 'Apply Resize' with 100% selected to resize to ({width}x{height}) to prepare the image for masking, 
+            or select a lower percentage to also reduce VRAM usage.</p>
+            <p>Available resize options: <span style="color: #4CAF50;">{", ".join(f"{opt}%" for opt in resize_options)}</span></p>
+            <p>Estimated VRAM usage: <span style="color: #FF3333;">{estimated_vram:.1f}GB</span></p>
+            <p>Minimum allowed size: <span style="color: #4CAF50;">{MIN_IMAGE_SIZE} pixels</span> for the smallest dimension</p>"""
+
+    return *controls_update, f"""
+<p>Current size: <span style="color: #3498DB;">{width}x{height}</span></p>
 <p>Available resize options: <span style="color: #4CAF50;">{", ".join(f"{opt}%" for opt in resize_options)}</span></p>
 <p>Estimated VRAM usage: <span style="color: #FF3333;">{estimated_vram:.1f}GB</span></p>
-<p>Minimum allowed size: <span style="color: #4CAF50;">{MIN_IMAGE_SIZE} pixels</span> for the smallest dimension</p>
-"""
-    
-    return (
-        gr.update(value=100, choices=resize_options, interactive=True),
-        gr.update(interactive=bool(resize_options)),
-        info_text
-    )
+<p>Minimum allowed size: <span style="color: #4CAF50;">{MIN_IMAGE_SIZE} pixels</span> for the smallest dimension</p>"""
+ 
  
 # from resize button. always applying resize to original image NEVER to a copy
 def apply_resize(percentage):
@@ -427,18 +440,20 @@ def apply_resize(percentage):
     new_h = ((original_h * percentage) // 100 // VAE_SCALE_FACTOR) * VAE_SCALE_FACTOR
     
     if percentage == 100:
-        global_image = global_original_image.copy()
-        message = f"Image restored to original copy: <span style=\"color: #3498DB;\">{original_w}x{original_h}</span>"
+        # Instead of restoring to original, we ensure VAE compatibility
+        global_image = resize_image(global_original_image.copy())
+        current_w, current_h = global_image.size
+        message = "Image reset to 100%"  # Default message
+        if (current_w, current_h) != (original_w, original_h):
+            message = f"Image resized for compatibility"
     else:
         global_image = global_original_image.resize((new_w, new_h), Image.LANCZOS)
-        message = f"Image resized to <span style=\"color: #3498DB;\">{new_w}x{new_h}</span>"
+        message = f"Image downsized to <span style=\"color: #3498DB;\">{new_w}x{new_h}</span>"
 
     resize_slider, resize_button, info = update_resize_controls({"background": global_image})
     
     return global_image, message + "<br>" + info, resize_slider, resize_button
 
-
-# from fill_image -redundant?
 def resize_image(image, min_size=MIN_IMAGE_SIZE, scale_factor=VAE_SCALE_FACTOR):
     width, height = image.size
     
@@ -454,7 +469,11 @@ def resize_image(image, min_size=MIN_IMAGE_SIZE, scale_factor=VAE_SCALE_FACTOR):
     new_width = ((new_width + scale_factor - 1) // scale_factor) * scale_factor
     new_height = ((new_height + scale_factor - 1) // scale_factor) * scale_factor
     
-    return image.resize((new_width, new_height), Image.LANCZOS)
+    # Always resize if dimensions changed
+    if new_width != width or new_height != height:
+        return image.resize((new_width, new_height), Image.LANCZOS)
+        
+    return image
     
     
     
@@ -628,7 +647,7 @@ css = """
 with gr.Blocks(css=css) as demo:
     gr.HTML(title)
     with gr.Row():
-        input_image = gr.ImageMask(
+        input_image = gr.ImageEditor(
             type="pil",
             label="Load an image and draw a mask with the Draw Tool",
             layers=False,
